@@ -1,44 +1,27 @@
 // src/shared/config/jwt.config.ts
 
-import jwt, { SignOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import { envConfig } from './env.config.js';
 
-export const jwtConfig = {
-  secret: process.env.JWT_SECRET || 'secret_key_default_cambiar_en_produccion',
-  expiresIn: process.env.JWT_EXPIRES_IN || '24h',
-  issuer: 'ElSaborLimeno',
-  audience: 'ElSaborLimeno-API'
+export interface JwtPayload {
+  id: number;
+  email: string;
+  id_rol: number;
+}
+
+export const signToken = (payload: JwtPayload): string => {
+  return jwt.sign(payload, envConfig.jwt.secret, {
+    expiresIn: envConfig.jwt.expiresIn
+  });
 };
 
-export const signToken = (payload: Record<string, any>): string => {
-  const options: SignOptions = {
-    expiresIn: jwtConfig.expiresIn,
-    issuer: jwtConfig.issuer,
-    audience: jwtConfig.audience
-  };
-
-  return jwt.sign(payload, jwtConfig.secret, options);
-};
-
-export const verifyToken = (token: string) => {
-  return jwt.verify(token, jwtConfig.secret, {
-    issuer: jwtConfig.issuer,
-    audience: jwtConfig.audience
-  }) as jwt.JwtPayload & {
-    id: number;
-    email: string;
-    id_rol: number;
-  };
+export const verifyToken = (token: string): JwtPayload => {
+  return jwt.verify(token, envConfig.jwt.secret) as JwtPayload;
 };
 
 export const validateJWTConfig = (): void => {
-  if (jwtConfig.secret.length < 32) {
-    console.warn('⚠️  JWT Secret muy corto. Usa al menos 32 caracteres');
+  if (!envConfig.jwt.secret || envConfig.jwt.secret.length < 32) {
+    throw new Error('JWT_SECRET debe tener al menos 32 caracteres');
   }
-  
-  if (process.env.NODE_ENV === 'production' && 
-      jwtConfig.secret.includes('default')) {
-    throw new Error('❌ Debes cambiar JWT_SECRET en producción');
-  }
-  
   console.log('✅ Configuración JWT validada');
 };

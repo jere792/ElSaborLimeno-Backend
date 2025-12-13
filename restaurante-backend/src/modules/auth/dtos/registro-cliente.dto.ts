@@ -2,20 +2,20 @@ export class RegistroClienteDto {
   nombres: string;
   apellidos: string;
   email: string;
-  clave: string;
+  password: string;
   telefono?: string;
 
   constructor(
     nombres: string,
     apellidos: string,
     email: string,
-    clave: string,
+    password: string,
     telefono?: string
   ) {
     this.nombres = nombres;
     this.apellidos = apellidos;
     this.email = email;
-    this.clave = clave;
+    this.password = password;
     this.telefono = telefono;
   }
 
@@ -24,7 +24,7 @@ export class RegistroClienteDto {
       body.nombres,
       body.apellidos,
       body.email,
-      body.clave || body.password,
+      body.password,
       body.telefono
     );
   }
@@ -44,7 +44,7 @@ export class RegistroClienteDto {
       errors.push('Email inválido');
     }
 
-    if (!this.clave || this.clave.length < 6) {
+    if (!this.password || this.password.length < 6) {
       errors.push('La contraseña debe tener al menos 6 caracteres');
     }
 

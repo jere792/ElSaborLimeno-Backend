@@ -1,32 +1,41 @@
-import { Request, Response, NextFunction } from 'express';
-import { ROLES } from '../constants/roles.constants.js';
+// src/shared/middlewares/roles.middlewares.ts
+
+import { Response, NextFunction } from 'express';
+import { AuthRequest } from './auth.middlewares.js';
 
 export const rolesMiddleware = (rolesPermitidos: number[]) => {
-  
-    return (req: Request, res: Response, next: NextFunction) => {
-
-    if (!req.usuario) 
-    {
-        res.status(401).json({ mensaje: 'No autenticado' });
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    try {
+      console.log('🔐 Roles Middleware: Verificando permisos');
+      console.log('👤 Usuario:', req.user);
+      console.log('🎭 Roles permitidos:', rolesPermitidos);
+      
+      if (!req.user) {
+        console.log('❌ Roles: No hay usuario en request');
+        res.status(401).json({
+          codigo: 0,
+          mensaje: 'No autorizado'
+        });
         return;
-    }
+      }
 
-    if (!rolesPermitidos.includes(req.usuario.id_rol)) 
-    {
+      if (!rolesPermitidos.includes(req.user.id_rol)) {
+        console.log(`❌ Roles: Usuario con rol ${req.user.id_rol} no tiene permiso`);
         res.status(403).json({
-        mensaje: 'No tienes permisos para acceder a este recurso',
-        rol_requerido: rolesPermitidos,
-        tu_rol: req.usuario.id_rol});
-        
+          codigo: 0,
+          mensaje: 'No tienes permisos para realizar esta acción'
+        });
         return;
-    }
+      }
 
-    next();
+      console.log('✅ Roles: Usuario autorizado');
+      next();
+    } catch (error: any) {
+      console.error('❌ Roles middleware error:', error.message);
+      res.status(500).json({
+        codigo: 0,
+        mensaje: 'Error en verificación de permisos'
+      });
+    }
   };
 };
-
-export const soloAdmin = rolesMiddleware([ROLES.ADMIN]);
-export const soloCajero = rolesMiddleware([ROLES.CAJERO]);
-export const soloCliente = rolesMiddleware([ROLES.CLIENTE]);
-export const adminYCajero = rolesMiddleware([ROLES.ADMIN, ROLES.CAJERO]);
-export const todosAutenticados = rolesMiddleware([ROLES.ADMIN, ROLES.CAJERO, ROLES.CLIENTE]);

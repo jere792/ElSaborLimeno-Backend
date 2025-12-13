@@ -1,48 +1,53 @@
+// src/shared/config/db.config.ts
+
 import sql from 'mssql';
+import { envConfig } from './env.config.js';
 
-let pool: sql.ConnectionPool | null = null;
-
-const getDbConfig = (): sql.config => {
-  return {
-    user: process.env.DB_USER!,
-    password: process.env.DB_PASSWORD!,
-    server: process.env.DB_SERVER!,
-    database: process.env.DB_NAME!,
-    options: {
-      encrypt: process.env.DB_ENCRYPT === 'true',
-      trustServerCertificate: process.env.DB_TRUST_CERT === 'true',
-      enableArithAbort: true,
-      connectTimeout: 30000,
-      requestTimeout: 30000
-    },
-    pool: {
-      max: 10,
-      min: 0,
-      idleTimeoutMillis: 30000
-    }
-  };
+const dbConfig: sql.config = {
+  server: envConfig.database.server,
+  database: envConfig.database.database,
+  user: envConfig.database.user,
+  password: envConfig.database.password,
+  options: envConfig.database.options,
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
+  }
 };
 
+// Pool singleton
+let pool: sql.ConnectionPool | null = null;
+
+// Crear conexión
 export const connectDB = async (): Promise<sql.ConnectionPool> => {
   try {
     if (pool?.connected) {
       return pool;
     }
 
-    const dbConfig = getDbConfig();
-    pool = await sql.connect(dbConfig);
-
-    pool.on('error', () => {
+    pool = await new sql.ConnectionPool(dbConfig).connect();
+    
+    pool.on('error', (err) => {
+      console.error('💥 Error en pool de BD:', err.message);
       pool = null;
     });
 
     return pool;
-  } catch (error) {
+  } catch (error: any) {
     pool = null;
-    throw new Error('No se pudo conectar a la base de datos');
+    console.error('❌ Error de conexión a BD:', error.message);
+    throw new Error(`No se pudo conectar a la base de datos: ${error.message}`);
   }
 };
 
+// Promise del pool
+export const poolPromise = connectDB();
+
+// Alias
+export const connectDatabase = connectDB;
+
+// Obtener pool
 export const getPool = (): sql.ConnectionPool => {
   if (!pool?.connected) {
     throw new Error('Base de datos no conectada');
@@ -50,6 +55,7 @@ export const getPool = (): sql.ConnectionPool => {
   return pool;
 };
 
+// Cerrar conexión
 export const closeDB = async (): Promise<void> => {
   if (pool) {
     await pool.close();
@@ -57,9 +63,10 @@ export const closeDB = async (): Promise<void> => {
   }
 };
 
+// Verificar conexión
 export const checkConnection = async (): Promise<boolean> => {
   try {
-    const currentPool = pool?.connected ? pool : await connectDB();
+    const currentPool = await poolPromise;
     const result = await currentPool.request().query('SELECT 1 AS test');
     return result.recordset[0].test === 1;
   } catch (error) {

@@ -1,19 +1,16 @@
-// src/modules/auth/dtos/login.dto.ts
-
 export class LoginDto {
   email: string;
-  clave: string;
+  password: string;
 
-  constructor(email: string, clave: string) {
+  constructor(email: string, password: string) {
     this.email = email;
-    this.clave = clave;
+    this.password = password;
   }
 
   static fromRequest(body: any): LoginDto {
-    // ✅ Acepta 'password' del frontend y lo convierte a 'clave'
     return new LoginDto(
       body.email,
-      body.password || body.clave  // ← IMPORTANTE
+      body.password
     );
   }
 
@@ -26,9 +23,9 @@ export class LoginDto {
       errors.push('El email no es válido');
     }
 
-    if (!this.clave || typeof this.clave !== 'string') {
+    if (!this.password || typeof this.password !== 'string') {
       errors.push('La contraseña es requerida');
-    } else if (this.clave.length < 6) {
+    } else if (this.password.length < 6) {
       errors.push('La contraseña debe tener al menos 6 caracteres');
     }
 
