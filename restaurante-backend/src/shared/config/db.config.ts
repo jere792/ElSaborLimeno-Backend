@@ -1,5 +1,3 @@
-// src/shared/config/db.config.ts
-
 import sql from 'mssql';
 import { envConfig } from './env.config.js';
 
@@ -16,10 +14,8 @@ const dbConfig: sql.config = {
   }
 };
 
-// Pool singleton
 let pool: sql.ConnectionPool | null = null;
 
-// Crear conexión
 export const connectDB = async (): Promise<sql.ConnectionPool> => {
   try {
     if (pool?.connected) {
@@ -36,18 +32,13 @@ export const connectDB = async (): Promise<sql.ConnectionPool> => {
     return pool;
   } catch (error: any) {
     pool = null;
-    console.error('❌ Error de conexión a BD:', error.message);
-    throw new Error(`No se pudo conectar a la base de datos: ${error.message}`);
+    throw new Error(`Error de conexión a BD: ${error.message}`);
   }
 };
 
-// Promise del pool
 export const poolPromise = connectDB();
-
-// Alias
 export const connectDatabase = connectDB;
 
-// Obtener pool
 export const getPool = (): sql.ConnectionPool => {
   if (!pool?.connected) {
     throw new Error('Base de datos no conectada');
@@ -55,7 +46,6 @@ export const getPool = (): sql.ConnectionPool => {
   return pool;
 };
 
-// Cerrar conexión
 export const closeDB = async (): Promise<void> => {
   if (pool) {
     await pool.close();
@@ -63,7 +53,6 @@ export const closeDB = async (): Promise<void> => {
   }
 };
 
-// Verificar conexión
 export const checkConnection = async (): Promise<boolean> => {
   try {
     const currentPool = await poolPromise;

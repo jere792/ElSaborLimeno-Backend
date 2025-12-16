@@ -66,7 +66,7 @@ export class AuthDao
                 .input('Email', sql.VarChar(255), data.email)
                 .input('Clave', sql.VarChar(255), data.clave)
                 .input('Telefono', sql.Char(15), data.telefono ?? null)
-                .execute('SP_RegistroCliente');
+                .execute('SP_Registro_Cliente');
 
             const { Codigo, Mensaje, Id_Usuario } = result.recordset[0];
 
@@ -86,7 +86,7 @@ export class AuthDao
             const result = await pool
                 .request()
                 .input('Id_Usuario', sql.Int, id_usuario)
-                .execute('SP_ObtenerUsuarioPorId');
+                .execute('SP_Usuario_Obtener_Id');
 
             return result.recordset.length > 0 
                 ? this.mapToUsuario(result.recordset[0]) 

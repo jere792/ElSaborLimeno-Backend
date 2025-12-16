@@ -22,16 +22,24 @@ export interface UsuarioConRol extends Usuario {
   Nombre_Rol: string;
 }
 
+// ✅ ACTUALIZADO - Agregados campos faltantes
 export interface UsuarioListado {
   Id_Usuario: number;
+  Id_Documento?: number;
+  Id_Roles: number;
   Nombres: string;
   Apellidos: string;
   Email: string;
   Telefono?: string;
+  Fecha_Nacimiento?: Date;
+  Genero?: string;
+  Direccion?: string;
   Estado: string;
   Fecha_Registro: Date;
-  Id_Roles: number;
   Nombre_Rol: string;
+  Reservas_Canceladas?: number;
+  Reservas_NoShow?: number;
+  Estado_Reservas?: string;
   Total_Registros?: number;
   Total_Paginas?: number;
   Pagina_Actual?: number;
@@ -40,7 +48,7 @@ export interface UsuarioListado {
 export interface Rol {
   Id_Roles: number;
   Nombre: string;
-  Descripcion: string;
+  Descripcion?: string;
 }
 
 export interface EstadisticasUsuarios {
@@ -48,10 +56,10 @@ export interface EstadisticasUsuarios {
   Usuarios_Activos: number;
   Usuarios_Inactivos: number;
   Usuarios_Suspendidos: number;
-  Total_Admins: number;
-  Total_Cajeros: number;
-  Total_Clientes: number;
-  Nuevos_Ultimos_30_Dias: number;
+  Total_Admins?: number;
+  Total_Cajeros?: number;
+  Total_Clientes?: number;
+  Nuevos_Ultimos_30_Dias?: number;
 }
 
 export interface RespuestaCrearUsuario {
@@ -78,6 +86,7 @@ export interface RespuestaObtenerUsuario {
   Reservas_Canceladas?: number;
   Reservas_NoShow?: number;
   Estado_Reservas?: string;
+  Nombre_Rol?: string;
 }
 
 export interface RespuestaGeneral {

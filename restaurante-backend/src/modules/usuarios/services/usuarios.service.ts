@@ -11,13 +11,87 @@ export class UsuariosService {
     this.usuariosDao = new UsuariosDao();
   }
 
-  async listarUsuarios(filtros: FiltrosListado) {
-    const resultados = await this.usuariosDao.listarUsuarios(filtros);
+  // ✅ ==================== OBTENER MI PERFIL ====================
+  async obtenerMiPerfil(id_usuario: number) {
+    const result = await this.usuariosDao.obtenerUsuarioPorId(id_usuario);
+    
+    if (result.Codigo === 0) {
+      throw new Error(result.Mensaje);
+    }
+
+    return {
+      codigo: 200,
+      mensaje: 'Perfil obtenido correctamente',
+      usuario: result
+    };
+  }
+
+  // ✅ ==================== ACTUALIZAR MI PERFIL ====================
+  async actualizarMiPerfil(
+    id_usuario: number,
+    datos: {
+      nombres: string;
+      apellidos: string;
+      email: string;
+      telefono?: string;
+      fecha_nacimiento?: Date;
+      genero?: string;
+      direccion?: string;
+    }
+  ) {
+    const result = await this.usuariosDao.actualizarMiPerfil({
+      id_usuario,
+      nombres: datos.nombres,
+      apellidos: datos.apellidos,
+      email: datos.email,
+      telefono: datos.telefono,
+      fecha_nacimiento: datos.fecha_nacimiento,
+      genero: datos.genero,
+      direccion: datos.direccion
+    });
+
+    if (result.Codigo === 0) {
+      throw new Error(result.Mensaje);
+    }
+
+    return {
+      codigo: 200,
+      mensaje: result.Mensaje
+    };
+  }
+
+  // ✅ ==================== CAMBIAR MI CONTRASEÑA ====================
+  async cambiarMiPassword(
+    id_usuario: number,
+    datos: {
+      password_actual: string;
+      password_nueva: string;
+    }
+  ) {
+    const result = await this.usuariosDao.cambiarMiPassword({
+      id_usuario,
+      password_actual: datos.password_actual,
+      password_nueva: datos.password_nueva
+    });
+
+    if (result.Codigo === 0) {
+      throw new Error(result.Mensaje);
+    }
+
+    return {
+      codigo: 200,
+      mensaje: result.Mensaje
+    };
+  }
+
+  // ==================== LISTAR USUARIOS ACTIVOS ====================
+  async listarUsuariosActivos(filtros: FiltrosListado) {
+    const resultados = await this.usuariosDao.listarUsuariosActivos(filtros);
     
     if (resultados.length === 0) {
       return {
         codigo: 1,
-        mensaje: 'No se encontraron usuarios',
+        mensaje: 'No se encontraron usuarios activos',
         usuarios: [],
         paginacion: {
           total_registros: 0,
@@ -32,17 +106,51 @@ export class UsuariosService {
 
     return {
       codigo: 1,
-      mensaje: 'Usuarios obtenidos exitosamente',
+      mensaje: 'Usuarios activos obtenidos exitosamente',
       usuarios: resultados,
       paginacion: {
-        total_registros: primerRegistro.Total_Registros,
-        total_paginas: primerRegistro.Total_Paginas,
-        pagina_actual: primerRegistro.Pagina_Actual,
+        total_registros: primerRegistro.Total_Registros || 0,
+        total_paginas: primerRegistro.Total_Paginas || 0,
+        pagina_actual: primerRegistro.Pagina_Actual || 1,
         registros_por_pagina: filtros.registrosPorPagina || 10
       }
     };
   }
 
+  // ==================== LISTAR USUARIOS INACTIVOS ====================
+  async listarUsuariosInactivos(filtros: FiltrosListado) {
+    const resultados = await this.usuariosDao.listarUsuariosInactivos(filtros);
+    
+    if (resultados.length === 0) {
+      return {
+        codigo: 1,
+        mensaje: 'No se encontraron usuarios inactivos',
+        usuarios: [],
+        paginacion: {
+          total_registros: 0,
+          total_paginas: 0,
+          pagina_actual: filtros.pagina || 1,
+          registros_por_pagina: filtros.registrosPorPagina || 10
+        }
+      };
+    }
+
+    const primerRegistro = resultados[0];
+
+    return {
+      codigo: 1,
+      mensaje: 'Usuarios inactivos obtenidos exitosamente',
+      usuarios: resultados,
+      paginacion: {
+        total_registros: primerRegistro.Total_Registros || 0,
+        total_paginas: primerRegistro.Total_Paginas || 0,
+        pagina_actual: primerRegistro.Pagina_Actual || 1,
+        registros_por_pagina: filtros.registrosPorPagina || 10
+      }
+    };
+  }
+
+  // ==================== REGISTRAR USUARIO ====================
   async registrarUsuario(id_admin: number, dto: CrearUsuarioDto) {
     const result = await this.usuariosDao.registrarUsuario({
       id_admin,
@@ -71,6 +179,7 @@ export class UsuariosService {
     };
   }
 
+  // ==================== OBTENER USUARIO ====================
   async obtenerUsuario(id: number) {
     const result = await this.usuariosDao.obtenerUsuarioPorId(id);
     
@@ -85,6 +194,7 @@ export class UsuariosService {
     };
   }
 
+  // ==================== ACTUALIZAR USUARIO ====================
   async actualizarUsuario(id_admin: number, id_usuario: number, dto: ActualizarUsuarioDto) {
     const result = await this.usuariosDao.actualizarUsuario({
       id_admin,
@@ -110,6 +220,7 @@ export class UsuariosService {
     };
   }
 
+  // ==================== CAMBIAR ESTADO ====================
   async cambiarEstado(id_admin: number, id_usuario: number, nuevo_estado: string) {
     const result = await this.usuariosDao.cambiarEstadoUsuario(id_admin, id_usuario, nuevo_estado);
     
@@ -123,19 +234,7 @@ export class UsuariosService {
     };
   }
 
-  async eliminarUsuario(id_admin: number, id_usuario: number) {
-    const result = await this.usuariosDao.eliminarUsuario(id_admin, id_usuario);
-    
-    if (result.Codigo === 0) {
-      throw new Error(result.Mensaje);
-    }
-
-    return {
-      codigo: 1,
-      mensaje: result.Mensaje
-    };
-  }
-
+  // ==================== RESTABLECER PASSWORD ====================
   async restablecerPassword(id_admin: number, id_usuario: number, nueva_password: string) {
     const result = await this.usuariosDao.restablecerPassword(id_admin, id_usuario, nueva_password);
     
@@ -149,6 +248,7 @@ export class UsuariosService {
     };
   }
 
+  // ==================== ESTADÍSTICAS ====================
   async obtenerEstadisticas() {
     const stats = await this.usuariosDao.obtenerEstadisticas();
     
@@ -159,6 +259,7 @@ export class UsuariosService {
     };
   }
 
+  // ==================== LISTAR ROLES ====================
   async listarRoles() {
     const roles = await this.usuariosDao.listarRoles();
     

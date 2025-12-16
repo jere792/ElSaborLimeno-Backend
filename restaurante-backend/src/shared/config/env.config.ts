@@ -7,17 +7,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Cargar variables de entorno
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 export const envConfig = {
-  // Entorno
-  nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '8080', 10),
-  apiPrefix: process.env.API_PREFIX || '/api',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:4200',
 
-  // Base de datos
+  nodeEnv: process.env.NODE_ENV!,
+  port: parseInt(process.env.PORT!, 10),
+  apiPrefix: process.env.API_PREFIX!,
+  corsOrigin: process.env.CORS_ORIGIN!,
+
   database: {
     server: process.env.DB_SERVER!,
     database: process.env.DB_NAME!,
@@ -32,46 +30,32 @@ export const envConfig = {
     }
   },
 
-  // JWT
   jwt: {
     secret: process.env.JWT_SECRET!,
-    expiresIn: process.env.JWT_EXPIRES_IN || '24h'
+    expiresIn: process.env.JWT_EXPIRES_IN!
   }
 };
 
-// Validar configuración requerida
 export const validateEnvConfig = (): void => {
   const required = [
+    { key: 'NODE_ENV', value: process.env.NODE_ENV },
+    { key: 'PORT', value: process.env.PORT },
     { key: 'DB_SERVER', value: process.env.DB_SERVER },
     { key: 'DB_NAME', value: process.env.DB_NAME },
     { key: 'DB_USER', value: process.env.DB_USER },
     { key: 'DB_PASSWORD', value: process.env.DB_PASSWORD },
-    { key: 'JWT_SECRET', value: process.env.JWT_SECRET }
+    { key: 'JWT_SECRET', value: process.env.JWT_SECRET },
+    { key: 'JWT_EXPIRES_IN', value: process.env.JWT_EXPIRES_IN }
   ];
 
   const missing = required.filter(item => !item.value).map(item => item.key);
 
-  if (missing.length > 0) {
+  if (missing.length > 0) 
+  {
     console.error(`\n❌ Variables de entorno faltantes:`);
     missing.forEach(key => console.error(`   - ${key}`));
     console.error(`\n💡 Verifica tu archivo .env\n`);
+    
     throw new Error(`Variables de entorno faltantes: ${missing.join(', ')}`);
-  }
-
-  console.log('✅ Variables de entorno validadas');
-};
-
-// Función para mostrar configuración (solo en desarrollo)
-export const showConfig = (): void => {
-  if (envConfig.nodeEnv === 'development') {
-    console.log('\n📋 Configuración:');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`🌍 Entorno: ${envConfig.nodeEnv}`);
-    console.log(`🚀 Puerto: ${envConfig.port}`);
-    console.log(`📊 DB: ${envConfig.database.database}`);
-    console.log(`🖥️  Server: ${envConfig.database.server}`);
-    console.log(`👤 User: ${envConfig.database.user}`);
-    console.log(`🔗 CORS: ${envConfig.corsOrigin}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   }
 };

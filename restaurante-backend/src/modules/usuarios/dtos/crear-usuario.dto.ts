@@ -1,4 +1,3 @@
-// src/modules/usuarios/dtos/crear-usuario.dto.ts
 
 export class CrearUsuarioDto {
   id_documento: number;
@@ -13,7 +12,7 @@ export class CrearUsuarioDto {
   direccion?: string;
 
   constructor(data: any) {
-    this.id_documento = data.id_documento || 1; // DNI por defecto
+    this.id_documento = data.id_documento || 1;
     this.id_roles = data.id_roles;
     this.nombres = data.nombres;
     this.apellidos = data.apellidos;

@@ -1,4 +1,5 @@
-export class RegistroClienteDto {
+export class RegistroClienteDto 
+{
   nombres: string;
   apellidos: string;
   email: string;
@@ -11,7 +12,8 @@ export class RegistroClienteDto {
     email: string,
     password: string,
     telefono?: string
-  ) {
+  ) 
+  {
     this.nombres = nombres;
     this.apellidos = apellidos;
     this.email = email;
@@ -19,7 +21,8 @@ export class RegistroClienteDto {
     this.telefono = telefono;
   }
 
-  static fromRequest(body: any): RegistroClienteDto {
+  static fromRequest(body: any): RegistroClienteDto 
+  {
     return new RegistroClienteDto(
       body.nombres,
       body.apellidos,
@@ -29,7 +32,8 @@ export class RegistroClienteDto {
     );
   }
 
-  validate(): { valid: boolean; errors: string[] } {
+  validate(): { valid: boolean; errors: string[] } 
+  {
     const errors: string[] = [];
 
     if (!this.nombres || this.nombres.trim().length < 2) {

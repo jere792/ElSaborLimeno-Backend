@@ -1,4 +1,3 @@
-// src/modules/usuarios/dtos/actualizar-usuario.dto.ts
 
 export class ActualizarUsuarioDto {
   id_documento: number;
