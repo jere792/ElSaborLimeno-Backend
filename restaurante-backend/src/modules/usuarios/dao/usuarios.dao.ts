@@ -35,6 +35,7 @@ export interface CrearUsuarioParams {
   fecha_nacimiento?: Date;
   genero?: string;
   direccion?: string;
+  foto_perfil?: string;
 }
 
 export interface ActualizarUsuarioParams {
@@ -49,9 +50,9 @@ export interface ActualizarUsuarioParams {
   fecha_nacimiento?: Date;
   genero?: string;
   direccion?: string;
+  foto_perfil?: string;
 }
 
-// ✅ NUEVO: Interfaces para perfil propio
 export interface ActualizarPerfilParams {
   id_usuario: number;
   nombres: string;
@@ -61,6 +62,7 @@ export interface ActualizarPerfilParams {
   fecha_nacimiento?: Date;
   genero?: string;
   direccion?: string;
+  foto_perfil?: string;
 }
 
 export interface CambiarPasswordParams {
@@ -71,7 +73,6 @@ export interface CambiarPasswordParams {
 
 export class UsuariosDao {
   
-  // ==================== LISTAR USUARIOS ACTIVOS ====================
   async listarUsuariosActivos(filtros: FiltrosListado = {}): Promise<UsuarioListado[]> {
     try {
       const pool = await poolPromise;
@@ -90,7 +91,6 @@ export class UsuariosDao {
     }
   }
 
-  // ==================== LISTAR USUARIOS INACTIVOS ====================
   async listarUsuariosInactivos(filtros: FiltrosListado = {}): Promise<UsuarioListado[]> {
     try {
       const pool = await poolPromise;
@@ -109,7 +109,6 @@ export class UsuariosDao {
     }
   }
 
-  // ==================== REGISTRAR USUARIO/CLIENTE ====================
   async registrarUsuario(params: CrearUsuarioParams): Promise<RespuestaCrearUsuario> {
     try {
       const pool = await poolPromise;
@@ -125,6 +124,7 @@ export class UsuariosDao {
         .input('Fecha_Nacimiento', sql.DateTime, params.fecha_nacimiento || null)
         .input('Genero', sql.VarChar, params.genero || null)
         .input('Direccion', sql.VarChar, params.direccion || null)
+        .input('Foto_Perfil', sql.VarChar, params.foto_perfil || null)
         .execute('SP_Usuario_Crear');
 
       return result.recordset[0];
@@ -133,19 +133,29 @@ export class UsuariosDao {
     }
   }
 
-  // ==================== OBTENER USUARIO POR ID ====================
+  // src/modules/usuarios/dao/usuarios.dao.ts
+
   async obtenerUsuarioPorId(id: number): Promise<RespuestaObtenerUsuario> {
     try {
+      console.log('🔍 [DAO] obtenerUsuarioPorId - ID recibido:', id);
+      
       const pool = await poolPromise;
       const result = await pool.request()
         .input('Id_Usuario', sql.Int, id)
         .execute('SP_Usuario_Obtener_Id');
 
+      // ✅ AGREGAR ESTOS LOGS
+      console.log('📦 [DAO] Recordsets completos:', result.recordsets.length);
+      console.log('📦 [DAO] Primer recordset:', JSON.stringify(result.recordset, null, 2));
+      console.log('🔍 [DAO] recordset[0]:', JSON.stringify(result.recordset[0], null, 2));
+      
       return result.recordset[0];
     } catch (error: any) {
+      console.error('❌ [DAO] Error:', error);
       throw new Error(`Error al obtener usuario: ${error.message}`);
     }
   }
+
 
   // ==================== ACTUALIZAR USUARIO ====================
   async actualizarUsuario(params: ActualizarUsuarioParams): Promise<RespuestaGeneral> {
@@ -163,6 +173,7 @@ export class UsuariosDao {
         .input('Fecha_Nacimiento', sql.DateTime, params.fecha_nacimiento || null)
         .input('Genero', sql.VarChar, params.genero || null)
         .input('Direccion', sql.VarChar, params.direccion || null)
+        .input('Foto_Perfil', sql.VarChar, params.foto_perfil || null)
         .execute('SP_Usuario_Actualizar');
 
       return result.recordset[0];
@@ -250,6 +261,7 @@ export class UsuariosDao {
         .input('Fecha_Nacimiento', sql.Date, params.fecha_nacimiento || null)
         .input('Genero', sql.VarChar(20), params.genero || null)
         .input('Direccion', sql.VarChar(255), params.direccion || null)
+        .input('Foto_Perfil', sql.VarChar, params.foto_perfil || null)
         .execute('SP_Usuario_Actualizar_MiPerfil');
 
       return result.recordset[0];
@@ -273,4 +285,6 @@ export class UsuariosDao {
       throw new Error(`Error al cambiar contraseña: ${error.message}`);
     }
   }
+
+  
 }

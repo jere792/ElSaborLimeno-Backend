@@ -2,6 +2,8 @@ import { AuthDao } from '../dao/auth.dao.js';
 import { LoginDto } from '../dtos/login.dto.js';
 import { RegistroClienteDto } from '../dtos/registro-cliente.dto.js';
 import { signToken, verifyToken as verifyJWT } from '../../../shared/config/jwt.config.js';
+import { LoginResponse, RegistroClienteResponse } from '../../../shared/types/auth-api-contracts.js';
+import { ROLES } from '../../../shared/constants/roles.constants.js';
 
 export class AuthService {
   private authDao: AuthDao;
@@ -10,12 +12,10 @@ export class AuthService {
     this.authDao = new AuthDao();
   }
 
-  async login(loginDto: LoginDto) 
-  {
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
     const result = await this.authDao.login(loginDto.email, loginDto.password);
 
-    if (result.codigo === 0) 
-    {
+    if (result.codigo === 0) {
       throw new Error(result.mensaje);
     }
 
@@ -36,48 +36,46 @@ export class AuthService {
         telefono: result.usuario!.telefono,
         direccion: result.usuario!.direccion,
         id_rol: result.usuario!.id_rol,
-        fecha_registro: result.usuario!.fecha_registro
+        fecha_registro: result.usuario!.fecha_registro.toISOString() 
       }
     };
   }
 
-  async registroCliente(registroDto: RegistroClienteDto) 
-  {
-      const result = await this.authDao.registroCliente({
+  async registroCliente(registroDto: RegistroClienteDto): Promise<RegistroClienteResponse> {
+    const result = await this.authDao.registroCliente({
+      nombres: registroDto.nombres,
+      apellidos: registroDto.apellidos,
+      email: registroDto.email,
+      clave: registroDto.password,
+      telefono: registroDto.telefono
+    });
+
+    if (result.codigo === 0) {
+      throw new Error(result.mensaje);
+    }
+
+    const token = signToken({
+      id: result.id_usuario,
+      email: registroDto.email,
+      id_rol: ROLES.CLIENTE
+    });
+
+    return {
+      mensaje: result.mensaje,
+      token,
+      usuario: {
+        id: result.id_usuario,
         nombres: registroDto.nombres,
         apellidos: registroDto.apellidos,
         email: registroDto.email,
-        clave: registroDto.password,
-        telefono: registroDto.telefono
-      });
-
-      if (result.codigo === 0) 
-      {
-        throw new Error(result.mensaje);
+        telefono: registroDto.telefono,
+        id_rol: ROLES.CLIENTE
       }
-
-      const token = signToken({
-        id: result.id_usuario,
-        email: registroDto.email,
-        id_rol: 5
-      });
-
-      return {
-        mensaje: result.mensaje,
-        token,
-        usuario: {
-          id: result.id_usuario,
-          nombres: registroDto.nombres,
-          apellidos: registroDto.apellidos,
-          email: registroDto.email,
-          telefono: registroDto.telefono,
-          id_rol: 5
-        }
-      };
+    };
   }
 
-  verifyToken(token: string) 
-  {
+
+  verifyToken(token: string) {
     try {
       const decoded = verifyJWT(token);
       

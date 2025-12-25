@@ -1,3 +1,5 @@
+import { ROLES } from '../../../shared/constants/roles.constants.js';
+
 
 export class CrearUsuarioDto {
   id_documento: number;
@@ -10,6 +12,7 @@ export class CrearUsuarioDto {
   fecha_nacimiento?: Date;
   genero?: string;
   direccion?: string;
+  foto_perfil?: string;
 
   constructor(data: any) {
     this.id_documento = data.id_documento || 1;
@@ -22,6 +25,7 @@ export class CrearUsuarioDto {
     this.fecha_nacimiento = data.fecha_nacimiento;
     this.genero = data.genero;
     this.direccion = data.direccion;
+    this.foto_perfil = data.foto_perfil;
   }
 
   static fromRequest(body: any): CrearUsuarioDto {
@@ -47,7 +51,8 @@ export class CrearUsuarioDto {
       errors.push('La contraseña debe tener al menos 6 caracteres');
     }
 
-    if (!this.id_roles || ![1, 2, 3, 4, 5, 6].includes(this.id_roles)) {
+    const rolesValidos = Object.values(ROLES) as number[];
+    if (!this.id_roles || !rolesValidos.includes(this.id_roles)) {
       errors.push('Rol inválido');
     }
 
@@ -57,6 +62,10 @@ export class CrearUsuarioDto {
 
     if (this.genero && !['Masculino', 'Femenino', 'Otro'].includes(this.genero)) {
       errors.push('Género inválido');
+    }
+
+    if (this.foto_perfil && !/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/.test(this.foto_perfil)) {
+      errors.push('URL de foto de perfil inválida');
     }
 
     return {

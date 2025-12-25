@@ -4,15 +4,17 @@ import { Request, Response } from 'express';
 import { UsuariosService } from '../services/usuarios.service.js';
 import { CrearUsuarioDto } from '../dtos/crear-usuario.dto.js';
 import { ActualizarUsuarioDto } from '../dtos/actualizar-usuario.dto.js';
+import { UploadService } from '../../../shared/services/upload.service.js';
 
 export class UsuariosController {
   private usuariosService: UsuariosService;
+  private uploadService: UploadService;
 
   constructor() {
     this.usuariosService = new UsuariosService();
+    this.uploadService = new UploadService();
   }
 
-  // ✅ ==================== OBTENER MI PERFIL ====================
   obtenerMiPerfil = async (req: Request, res: Response): Promise<void> => {
     try {
       const id_usuario = (req as any).user?.id;
@@ -35,7 +37,76 @@ export class UsuariosController {
     }
   };
 
-  // ✅ ==================== ACTUALIZAR MI PERFIL ====================
+  actualizarFotoPerfil = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id_usuario = (req as any).user?.id;
+      
+      if (!id_usuario) {
+        res.status(401).json({
+          codigo: 0,
+          mensaje: 'No autenticado'
+        });
+        return;
+      }
+
+      const file = req.file;
+      
+      if (!file) {
+        res.status(400).json({
+          codigo: 0,
+          mensaje: 'No se proporcionó ninguna imagen'
+        });
+        return;
+      }
+
+      // Obtener la foto actual para eliminarla después (opcional)
+      const perfilActual = await this.usuariosService.obtenerMiPerfil(id_usuario);
+      const fotoAnterior = perfilActual.usuario?.foto_perfil; // ✅ CAMBIADO: Usuario → usuario
+
+      // Subir nueva foto a Cloudinary
+      const uploadResult = await this.uploadService.uploadImage(
+        file.buffer,
+        'usuarios/perfiles',
+        `usuario_${id_usuario}_${Date.now()}`
+      );
+
+      if (!uploadResult.success) {
+        res.status(500).json({
+          codigo: 0,
+          mensaje: uploadResult.message || 'Error al subir imagen'
+        });
+        return;
+      }
+
+      // Actualizar en base de datos
+      await this.usuariosService.actualizarFotoPerfil(
+        id_usuario,
+        uploadResult.url!
+      );
+
+      // Eliminar foto anterior de Cloudinary (opcional)
+      if (fotoAnterior && fotoAnterior.includes('cloudinary')) {
+        const publicId = this.uploadService.extractPublicId(fotoAnterior);
+        if (publicId) {
+          await this.uploadService.deleteImage(publicId);
+        }
+      }
+
+      res.json({
+        codigo: 1,
+        mensaje: 'Foto de perfil actualizada correctamente',
+        url: uploadResult.url
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        codigo: 0,
+        mensaje: error.message
+      });
+    }
+  };
+
+
+  // ✅ MODIFICADO: Actualizar perfil con opción de foto
   actualizarMiPerfil = async (req: Request, res: Response): Promise<void> => {
     try {
       const id_usuario = (req as any).user?.id;
@@ -49,14 +120,33 @@ export class UsuariosController {
       }
 
       const { nombres, apellidos, email, telefono, fecha_nacimiento, genero, direccion } = req.body;
+      let foto_perfil = req.body.foto_perfil;
 
-      // Validaciones básicas
       if (!nombres || !apellidos || !email) {
         res.status(400).json({
           codigo: 0,
           mensaje: 'Los campos Nombres, Apellidos y Email son obligatorios'
         });
         return;
+      }
+
+      // Si hay archivo, subir a Cloudinary
+      if (req.file) {
+        const uploadResult = await this.uploadService.uploadImage(
+          req.file.buffer,
+          'usuarios/perfiles',
+          `usuario_${id_usuario}_${Date.now()}`
+        );
+
+        if (uploadResult.success) {
+          foto_perfil = uploadResult.url;
+        } else {
+          res.status(500).json({
+            codigo: 0,
+            mensaje: 'Error al subir la imagen'
+          });
+          return;
+        }
       }
 
       const result = await this.usuariosService.actualizarMiPerfil(id_usuario, {
@@ -66,7 +156,8 @@ export class UsuariosController {
         telefono,
         fecha_nacimiento,
         genero,
-        direccion
+        direccion,
+        foto_perfil
       });
 
       res.json(result);
@@ -78,7 +169,6 @@ export class UsuariosController {
     }
   };
 
-  // ✅ ==================== CAMBIAR MI CONTRASEÑA ====================
   cambiarMiPassword = async (req: Request, res: Response): Promise<void> => {
     try {
       const id_usuario = (req as any).user?.id;
@@ -93,7 +183,6 @@ export class UsuariosController {
 
       const { password_actual, password_nueva } = req.body;
 
-      // Validaciones
       if (!password_actual || !password_nueva) {
         res.status(400).json({
           codigo: 0,
@@ -125,7 +214,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== LISTAR USUARIOS ACTIVOS ====================
   listarActivos = async (req: Request, res: Response): Promise<void> => {
     try {
       const filtros = {
@@ -147,7 +235,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== LISTAR USUARIOS INACTIVOS ====================
   listarInactivos = async (req: Request, res: Response): Promise<void> => {
     try {
       const filtros = {
@@ -169,7 +256,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== REGISTRAR USUARIO ====================
   registrar = async (req: Request, res: Response): Promise<void> => {
     try {
       const id_admin = (req as any).user?.id || 1;
@@ -197,7 +283,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== OBTENER USUARIO ====================
   obtener = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = parseInt(req.params.id);
@@ -211,7 +296,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== ACTUALIZAR USUARIO ====================
   actualizar = async (req: Request, res: Response): Promise<void> => {
     try {
       const id_admin = (req as any).user?.id || 1;
@@ -240,7 +324,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== CAMBIAR ESTADO ====================
   cambiarEstado = async (req: Request, res: Response): Promise<void> => {
     try {
       const id_admin = (req as any).user?.id || 1;
@@ -265,7 +348,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== RESTABLECER PASSWORD ====================
   restablecerPassword = async (req: Request, res: Response): Promise<void> => {
     try {
       const id_admin = (req as any).user?.id || 1;
@@ -290,7 +372,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== ESTADÍSTICAS ====================
   estadisticas = async (req: Request, res: Response): Promise<void> => {
     try {
       const result = await this.usuariosService.obtenerEstadisticas();
@@ -303,7 +384,6 @@ export class UsuariosController {
     }
   };
 
-  // ==================== LISTAR ROLES ====================
   listarRoles = async (req: Request, res: Response): Promise<void> => {
     try {
       const result = await this.usuariosService.listarRoles();

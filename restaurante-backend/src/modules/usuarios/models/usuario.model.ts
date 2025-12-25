@@ -16,13 +16,13 @@ export interface Usuario {
   Reservas_Canceladas?: number;
   Reservas_NoShow?: number;
   Estado_Reservas?: string;
+  Foto_Perfil?: string;
 }
 
 export interface UsuarioConRol extends Usuario {
   Nombre_Rol: string;
 }
 
-// ✅ ACTUALIZADO - Agregados campos faltantes
 export interface UsuarioListado {
   Id_Usuario: number;
   Id_Documento?: number;
@@ -36,6 +36,7 @@ export interface UsuarioListado {
   Direccion?: string;
   Estado: string;
   Fecha_Registro: Date;
+  Foto_Perfil?: string;
   Nombre_Rol: string;
   Reservas_Canceladas?: number;
   Reservas_NoShow?: number;
@@ -83,6 +84,7 @@ export interface RespuestaObtenerUsuario {
   Direccion?: string;
   Estado?: string;
   Fecha_Registro?: Date;
+  Foto_Perfil?: string;
   Reservas_Canceladas?: number;
   Reservas_NoShow?: number;
   Estado_Reservas?: string;
